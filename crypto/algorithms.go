@@ -1,7 +1,7 @@
 //
 // algorithms.go
 //
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // See the LICENSE file for the details on licensing.
 //
@@ -12,6 +12,7 @@ import (
 	"fmt"
 )
 
+// EncType specifies Kerberos encryption algorithms.
 type EncType uint16
 
 func (et EncType) String() string {
@@ -22,6 +23,7 @@ func (et EncType) String() string {
 	return fmt.Sprintf("{EncType 0x%x}", int(et))
 }
 
+// AlgorithmInfo provides information about an encryption algorithm.
 type AlgorithmInfo struct {
 	Name        string
 	Aliases     []string
@@ -30,6 +32,7 @@ type AlgorithmInfo struct {
 	RFC         string
 }
 
+// Algorithms define known Kerberos encryption algorithms.
 var Algorithms = []*AlgorithmInfo{
 	&AlgorithmInfo{
 		Name:        "des-cbc-crc",
@@ -127,7 +130,12 @@ var Algorithms = []*AlgorithmInfo{
 	},
 }
 
+// AlgorithmsByEncType provides a mapping from EncType to
+// AlgorithmInfo.
 var AlgorithmsByEncType map[EncType]*AlgorithmInfo
+
+// AlgorithmsByName provide a mapping from algorithm name to
+// AlgorithmInfo.
 var AlgorithmsByName map[string]*AlgorithmInfo
 
 func init() {
