@@ -1,7 +1,7 @@
 //
 // keytab.go
 //
-// Copyright (c) 2018 Markku Rossi
+// Copyright (c) 2018-2024 Markku Rossi
 //
 // See the LICENSE file for the details on licensing.
 //
@@ -18,10 +18,12 @@ import (
 	"github.com/markkurossi/kerberos/crypto"
 )
 
+// Keytab defines Kerberos keytab.
 type Keytab struct {
 	Entries []KeyEntry
 }
 
+// KeyEntry defines a keytab entry.
 type KeyEntry struct {
 	Principal  Principal
 	Timestamp  int
@@ -30,12 +32,23 @@ type KeyEntry struct {
 	Key        []byte
 }
 
+// Principal defines a Kerberos principal.
 type Principal struct {
-	Components []Data
+	Components [][]byte
 	NameType   int
 }
 
-type Data []byte
+func (princ Principal) String() string {
+	var result string
+
+	for idx, component := range princ.Components {
+		if idx > 0 {
+			result += "/"
+		}
+		result += string(component)
+	}
+	return result
+}
 
 type input struct {
 	data    []byte
@@ -53,7 +66,7 @@ func (i *input) Int8() (int, error) {
 		return 0, fmt.Errorf("Truncated keytab")
 	}
 	val := int(i.data[i.offset])
-	i.offset += 1
+	i.offset++
 
 	return val, nil
 }
@@ -152,6 +165,7 @@ func newInput(data []byte) (*input, error) {
 	}, nil
 }
 
+// Parse parses the keytab data.
 func Parse(data []byte) (*Keytab, error) {
 	in, err := newInput(data)
 	if err != nil {
@@ -196,6 +210,7 @@ func Parse(data []byte) (*Keytab, error) {
 	return &keytab, nil
 }
 
+// ParseKeyEntry parses a keytab entry from the input.
 func ParseKeyEntry(in *input) (keyEntry KeyEntry, err error) {
 
 	if keyEntry.Principal, err = ParsePrincipal(in); err != nil {
@@ -220,6 +235,7 @@ func ParseKeyEntry(in *input) (keyEntry KeyEntry, err error) {
 	return
 }
 
+// ParsePrincipal parses a principal from the input.
 func ParsePrincipal(in *input) (principal Principal, err error) {
 	// Principal.
 	numComponents, err := in.Int16()
@@ -227,7 +243,7 @@ func ParsePrincipal(in *input) (principal Principal, err error) {
 		return
 	}
 	if in.version == 2 {
-		// Real is included in version 1
+		// Realm is included in version 1
 		numComponents++
 	}
 	for i := 0; i < numComponents; i++ {
@@ -237,7 +253,7 @@ func ParsePrincipal(in *input) (principal Principal, err error) {
 			return
 		}
 		log.Printf("Data[%d]:\n%s", i, hex.Dump(d))
-		principal.Components = append(principal.Components, Data(d))
+		principal.Components = append(principal.Components, d)
 	}
 	if in.version == 2 {
 		principal.NameType, err = in.Int32()
